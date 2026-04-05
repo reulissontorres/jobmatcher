@@ -1,0 +1,16 @@
+services:
+  postgres-core:
+    image: postgres:16.3-alpine
+    container_name: jobmatcher-db
+    environment:
+      POSTGRES_USER: jobmatcher_admin
+      POSTGRES_PASSWORD: admin_password_123
+      POSTGRES_DB: jobmatcher_core_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+volumes:
+  pgdata:

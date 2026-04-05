@@ -1,0 +1,6 @@
+@JobMatcher.IdentityCore_HostAddress = http://localhost:5297
+
+GET {{JobMatcher.IdentityCore_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
