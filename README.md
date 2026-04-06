@@ -128,3 +128,118 @@ kill <pid>
 
 If you want, I can also add a `Makefile` or `scripts/` folder with the common commands (`start`, `stop`, `migrate`, `reset-db`) for convenience.
 
+---
+
+## Using Insomnia to exercise the API
+
+This project exposes a simple REST API you can interact with using any HTTP client. The steps below show how to use Insomnia (desktop) to run the common flows: register/login, seed a company (dev), create a job and list jobs.
+
+1) Install Insomnia: https://insomnia.rest/
+
+2) Create a local environment
+
+- Open **Manage Environments** (top-left) and add a new environment (for example `Local`). Use this JSON for the environment variables:
+
+```json
+{
+	"base_url": "http://localhost:5000",
+	"token": ""
+}
+```
+
+Note: the API may run on a different port (see the `dotnet run` output). If your server prints `Now listening on: http://localhost:5297` update `base_url` accordingly.
+
+3) Create the Register request
+
+- New Request → POST → URL: `{{ base_url }}/api/auth/register`
+- Header: `Content-Type: application/json`
+- Body (JSON):
+
+```json
+{
+	"fullName": "Test User",
+	"email": "test.user@example.com",
+	"password": "P@ssw0rd123"
+}
+```
+
+- Send the request. The response is an `AuthResponse` containing `token`.
+
+4) Create the Login request and capture token
+
+- New Request → POST → URL: `{{ base_url }}/api/auth/login`
+- Body (JSON):
+
+```json
+{
+	"email": "test.user@example.com",
+	"password": "P@ssw0rd123"
+}
+```
+
+- Send the request. Copy the returned `token` value (string).
+
+5) Save the token in the environment
+
+- Open **Manage Environments** and paste the token into the `token` variable for your `Local` environment. The environment JSON should now look like:
+
+```json
+{
+	"base_url": "http://localhost:5000",
+	"token": "eyJhbGciOi..."
+}
+```
+
+6) Use the token for protected requests
+
+- For every protected request add the header:
+
+```
+Authorization: Bearer {{ token }}
+```
+
+Insomnia will substitute the token value from the environment when sending the request.
+
+7) Seed a test company (dev-only endpoint)
+
+- Endpoint: `POST {{ base_url }}/api/dev/seed-company?name=MyTestCo`
+- Header: `Authorization: Bearer {{ token }}`
+- This endpoint creates a `Company` and assigns the authenticated user to it. Useful when your user has no `CompanyId` yet.
+
+8) Create a Job
+
+- Endpoint: `POST {{ base_url }}/api/jobs`
+- Header: `Authorization: Bearer {{ token }}` and `Content-Type: application/json`
+- Body example:
+
+```json
+{
+	"title": "Software Engineer",
+	"description": "Build backend services",
+	"requirements": "C#, .NET 10, EF Core",
+	"location": "Remote",
+	"salaryRange": "80k-120k",
+	"employmentType": "Full-time"
+}
+```
+
+9) List Jobs
+
+- Endpoint: `GET {{ base_url }}/api/jobs`
+- Header: `Authorization: Bearer {{ token }}`
+- Optional query params: `status` (text name e.g. `Open`), `search`, `location`.
+
+10) Job details / update / delete
+
+- `GET {{ base_url }}/api/jobs/{id}` — job details (includes `applications`)
+- `PUT {{ base_url }}/api/jobs/{id}` — update; body same as create plus `status` (enum: `0` = Draft, `1` = Open, `2` = Closed)
+- `DELETE {{ base_url }}/api/jobs/{id}` — soft-close (sets `Status` to `Closed`)
+
+Notes:
+- The dev seed endpoint requires authentication and is intended for local development only.
+- If you prefer automating token extraction, Insomnia supports response hooks and environment templating; for quick tests copying the token into the environment is simplest.
+
+---
+
+If you'd like, I can export an Insomnia workspace JSON that includes the above requests and environment so you can import it directly. Would you like me to add that export to the repo?
+

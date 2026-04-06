@@ -69,6 +69,7 @@ builder.Services.AddAuthentication(options =>
 // Application services
 builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IJobService, JobService>();
 
 // CORS for React dev
 builder.Services.AddCors(options =>
