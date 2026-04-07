@@ -11,6 +11,11 @@ namespace JobMatcher.IdentityCore.Data
         public DbSet<Company> Companies { get; set; } = null!;
         public DbSet<Job> Jobs { get; set; } = null!;
         public DbSet<Application> Applications { get; set; } = null!;
+        public DbSet<Candidate> Candidates { get; set; } = null!;
+        public DbSet<Skill> Skills { get; set; } = null!;
+        public DbSet<CandidateSkill> CandidateSkills { get; set; } = null!;
+        public DbSet<WorkExperience> WorkExperiences { get; set; } = null!;
+        public DbSet<Education> Educations { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
@@ -49,6 +54,48 @@ namespace JobMatcher.IdentityCore.Data
                 b.Property(a => a.MatchScore).HasDefaultValue(0.0);
                 b.Property(a => a.AppliedAt).HasDefaultValueSql("now()");
                 b.HasOne(a => a.Job).WithMany(j => j.Applications).HasForeignKey(a => a.JobId).OnDelete(DeleteBehavior.Cascade);
+                b.HasOne(a => a.Candidate).WithMany(c => c.Applications).HasForeignKey(a => a.CandidateId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // Candidates
+            builder.Entity<Candidate>(b =>
+            {
+                b.HasKey(c => c.Id);
+                b.Property(c => c.FullName).IsRequired().HasMaxLength(256);
+                b.Property(c => c.Email).HasMaxLength(256);
+                b.Property(c => c.Phone).HasMaxLength(64);
+                b.Property(c => c.CreatedAt).HasDefaultValueSql("now()");
+            });
+
+            builder.Entity<Skill>(b =>
+            {
+                b.HasKey(s => s.Id);
+                b.Property(s => s.Name).IsRequired().HasMaxLength(128);
+                b.HasIndex(s => s.Name).IsUnique();
+            });
+
+            builder.Entity<CandidateSkill>(b =>
+            {
+                b.HasKey(cs => new { cs.CandidateId, cs.SkillId });
+                b.HasOne(cs => cs.Candidate).WithMany(c => c.CandidateSkills).HasForeignKey(cs => cs.CandidateId).OnDelete(DeleteBehavior.Cascade);
+                b.HasOne(cs => cs.Skill).WithMany(s => s.CandidateSkills).HasForeignKey(cs => cs.SkillId).OnDelete(DeleteBehavior.Cascade);
+                b.Property(cs => cs.Level).IsRequired();
+            });
+
+            builder.Entity<WorkExperience>(b =>
+            {
+                b.HasKey(w => w.Id);
+                b.Property(w => w.CompanyName).IsRequired();
+                b.Property(w => w.Role).IsRequired();
+                b.HasOne(w => w.Candidate).WithMany(c => c.WorkExperiences).HasForeignKey(w => w.CandidateId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<Education>(b =>
+            {
+                b.HasKey(e => e.Id);
+                b.Property(e => e.Institution).IsRequired();
+                b.Property(e => e.Degree).IsRequired();
+                b.HasOne(e => e.Candidate).WithMany(c => c.Educations).HasForeignKey(e => e.CandidateId).OnDelete(DeleteBehavior.Cascade);
             });
         }
     }

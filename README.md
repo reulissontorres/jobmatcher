@@ -97,6 +97,66 @@ curl -H "Authorization: Bearer $TOKEN" http://localhost:5297/api/some-protected-
 
 ---
 
+## Endpoints (Candidates)
+
+The Candidates API provides CRUD and listing features used by the React frontend. All endpoints are under `/api/candidates` and require authentication.
+
+- `POST /api/candidates` — create candidate
+	- Body: `CreateCandidateRequest` JSON (see DTOs in code). Example:
+
+```bash
+curl -X POST http://localhost:5297/api/candidates \
+	-H "Content-Type: application/json" \
+	-H "Authorization: Bearer $TOKEN" \
+	-d '{"fullName":"Jane Doe","email":"jane@example.com","phone":"+551199999999","resumeText":"Experienced backend developer...","skills":[{"name":"C#","level":90},{"name":"EF Core","level":80}],"workExperiences":[{"companyName":"Acme","role":"Backend Engineer","startDate":"2019-01-01"}],"educations":[{"institution":"State University","degree":"BSc Computer Science","startDate":"2014-02-01","endDate":"2018-12-01"}] }'
+```
+
+- `GET /api/candidates` — list candidates
+	- Query params:
+		- `search` (string) — name search
+		- `skill` (string) — filter by skill name
+		- `jobId` (Guid) — include `MatchScore` from `Application` and order by it
+		- `page` (int), `pageSize` (int) — pagination
+	- Response: list of `CandidateResponse` (includes `Id`, `FullName`, `TopSkills`, `ExperienceSummary`, optional `MatchScore`).
+
+Example:
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" "http://localhost:5297/api/candidates?search=Jane&skill=C%23&page=1&pageSize=20"
+```
+
+- `GET /api/candidates/{id}` — get candidate details
+	- Response: `CandidateDetailsResponse` (full profile, skills with levels, work experiences, educations, applications summary).
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" http://localhost:5297/api/candidates/<candidate-id>
+```
+
+- `PUT /api/candidates/{id}` — update candidate
+	- Body: `UpdateCandidateRequest` (same shape as create). Returns updated `CandidateResponse`.
+
+```bash
+curl -X PUT http://localhost:5297/api/candidates/<candidate-id> \
+	-H "Content-Type: application/json" \
+	-H "Authorization: Bearer $TOKEN" \
+	-d '{"fullName":"Jane Doe Updated","skills":[{"name":"C#","level":95}] }'
+```
+
+- `DELETE /api/candidates/{id}` — delete candidate (cascade removes related skills links, experiences, educations)
+
+```bash
+curl -X DELETE -H "Authorization: Bearer $TOKEN" http://localhost:5297/api/candidates/<candidate-id>
+```
+
+Notes:
+- `Email` and `Phone` are optional to comply with LGPD; they appear only in detail responses.
+- Skill `level` must be between `1` and `100`.
+- When `jobId` is provided to the list endpoint, `MatchScore` from the corresponding `Application` is returned and the list is ordered by score (highest first).
+- Listing uses pagination (`page` and `pageSize`) — defaults are `page=1`, `pageSize=20`.
+
+
+---
+
 ## Troubleshooting
 
 - "password authentication failed for user": this usually happens when a Postgres data volume was initialized previously with a different password. If you are ok losing DB data, remove the container and its volume and recreate it:
