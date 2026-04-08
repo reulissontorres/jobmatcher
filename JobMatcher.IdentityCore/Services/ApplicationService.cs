@@ -1,11 +1,6 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using JobMatcher.IdentityCore.Data;
 using JobMatcher.IdentityCore.DTOs;
-using JobMatcher.IdentityCore.Entities;
 using JobMatcher.IdentityCore.Interfaces;
 
 namespace JobMatcher.IdentityCore.Services
@@ -32,20 +27,20 @@ namespace JobMatcher.IdentityCore.Services
             var existing = await _db.Applications.FirstOrDefaultAsync(a => a.CandidateId == candidateId && a.JobId == jobId);
             if (existing != null) return ServiceResult<ApplicationSummaryDto>.Failure("Candidate already applied to this job.");
 
-            var app = new Application
-            {
-                Id = Guid.NewGuid(),
-                CandidateId = candidateId,
-                JobId = jobId,
-                MatchScore = 0.0,
-                Status = ApplicationStatus.Pending,
-                AppliedAt = DateTime.UtcNow
-            };
+            var app = new Entities.Builders.ApplicationBuilder()
+            .ForCandidate(candidateId)
+            .ForJob(jobId)
+            .WithInitialStatus()
+            .WithMatchScore(0.0)
+            .Build();
+
             _db.Applications.Add(app);
             await _db.SaveChangesAsync();
 
-            // compute match synchronously for now
+            // compute match synchronously for now and persist score
             var score = await _matchingService.MatchCandidateToJobAsync(candidateId, jobId);
+            app.MatchScore = score;
+            await _db.SaveChangesAsync();
 
             var dto = new ApplicationSummaryDto
             {

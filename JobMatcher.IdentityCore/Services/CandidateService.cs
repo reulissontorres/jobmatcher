@@ -1,9 +1,9 @@
 using JobMatcher.IdentityCore.Data;
 using JobMatcher.IdentityCore.DTOs;
 using JobMatcher.IdentityCore.Entities;
+using JobMatcher.IdentityCore.Entities.Builders;
 using JobMatcher.IdentityCore.Interfaces;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 
 namespace JobMatcher.IdentityCore.Services
 {
@@ -52,22 +52,42 @@ namespace JobMatcher.IdentityCore.Services
             using var tx = await _db.Database.BeginTransactionAsync();
             try
             {
-                var candidate = new Candidate
+                var cand = new CandidateBuilder()
+                    .WithBasicInfo(request.FullName.Trim(), request.Email, request.Phone)
+                    .WithResume(request.ResumeText);
+
+                if (request.Skills != null && request.Skills.Any())
                 {
-                    Id = Guid.NewGuid(),
-                    FullName = request.FullName.Trim(),
-                    Email = request.Email,
-                    Phone = request.Phone,
-                    ResumeText = request.ResumeText,
-                    CreatedAt = DateTime.UtcNow
-                };
+                    foreach (var s in request.Skills)
+                    {
+                        cand.AddSkill(s.Name, s.Level);
+                    }
+                }
+
+                if (request.WorkExperiences != null && request.WorkExperiences.Any())
+                {
+                    foreach (var w in request.WorkExperiences)
+                    {
+                        cand.AddWorkExperience(w.CompanyName, w.Role, w.Description, w.StartDate, w.EndDate);
+                    }
+                }
+
+                if (request.Educations != null && request.Educations.Any())
+                {
+                    foreach (var e in request.Educations)
+                    {
+                        cand.AddEducation(e.Institution, e.Degree, e.FieldOfStudy, e.StartDate, e.EndDate);
+                    }
+                }
+
+                var candidate = cand.Build();
 
                 _db.Candidates.Add(candidate);
 
                 // Skills: reuse existing or create
-                if (request.Skills != null && request.Skills.Any())
+                if (cand.SkillEntries != null && cand.SkillEntries.Count > 0)
                 {
-                    var names = request.Skills.Select(s => s.Name.Trim()).Where(n => !string.IsNullOrEmpty(n)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                    var names = cand.SkillEntries.Select(s => s.Name).Where(n => !string.IsNullOrEmpty(n)).Distinct(StringComparer.OrdinalIgnoreCase).Select(n => n.Trim()).ToList();
                     var namesLower = names.Select(n => n.ToLower()).ToList();
 
                     var existingSkills = await _db.Skills.Where(s => namesLower.Contains(s.Name.ToLower())).ToListAsync();
@@ -80,50 +100,16 @@ namespace JobMatcher.IdentityCore.Services
                         existingSkills.AddRange(newSkills);
                     }
 
-                    foreach (var s in request.Skills)
+                    foreach (var se in cand.SkillEntries)
                     {
-                        var skillEntity = existingSkills.FirstOrDefault(x => string.Equals(x.Name, s.Name.Trim(), StringComparison.OrdinalIgnoreCase));
+                        var skillEntity = existingSkills.FirstOrDefault(x => string.Equals(x.Name, se.Name.Trim(), StringComparison.OrdinalIgnoreCase));
                         if (skillEntity == null) continue;
-                        var cs = new CandidateSkill { CandidateId = candidate.Id, SkillId = skillEntity.Id, Level = s.Level };
+                        var cs = new CandidateSkill { CandidateId = candidate.Id, SkillId = skillEntity.Id, Level = se.Level };
                         _db.CandidateSkills.Add(cs);
                     }
                 }
 
-                if (request.WorkExperiences != null && request.WorkExperiences.Any())
-                {
-                    foreach (var w in request.WorkExperiences)
-                    {
-                        var we = new WorkExperience
-                        {
-                            Id = Guid.NewGuid(),
-                            CandidateId = candidate.Id,
-                            CompanyName = w.CompanyName,
-                            Role = w.Role,
-                            Description = w.Description,
-                            StartDate = DateTime.SpecifyKind(w.StartDate, DateTimeKind.Utc),
-                            EndDate = w.EndDate.HasValue ? DateTime.SpecifyKind(w.EndDate.Value, DateTimeKind.Utc) : (DateTime?)null
-                        };
-                        _db.WorkExperiences.Add(we);
-                    }
-                }
-
-                if (request.Educations != null && request.Educations.Any())
-                {
-                    foreach (var e in request.Educations)
-                    {
-                        var edu = new Education
-                        {
-                            Id = Guid.NewGuid(),
-                            CandidateId = candidate.Id,
-                            Institution = e.Institution,
-                            Degree = e.Degree,
-                            FieldOfStudy = e.FieldOfStudy,
-                            StartDate = DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
-                            EndDate = e.EndDate.HasValue ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc) : (DateTime?)null
-                        };
-                        _db.Educations.Add(edu);
-                    }
-                }
+                // Work experiences and educations were added to candidate by the builder and will be saved via the candidate relationship
 
                 await _db.SaveChangesAsync();
                 await tx.CommitAsync();
@@ -284,16 +270,7 @@ namespace JobMatcher.IdentityCore.Services
                 {
                     foreach (var w in request.WorkExperiences)
                     {
-                        _db.WorkExperiences.Add(new WorkExperience
-                        {
-                            Id = Guid.NewGuid(),
-                            CandidateId = candidate.Id,
-                            CompanyName = w.CompanyName,
-                            Role = w.Role,
-                            Description = w.Description,
-                            StartDate = DateTime.SpecifyKind(w.StartDate, DateTimeKind.Utc),
-                            EndDate = w.EndDate.HasValue ? DateTime.SpecifyKind(w.EndDate.Value, DateTimeKind.Utc) : (DateTime?)null
-                        });
+                        _db.WorkExperiences.Add(CandidateBuilder.CreateWorkExperience(candidate.Id, w.CompanyName, w.Role, w.Description, w.StartDate, w.EndDate));
                     }
                 }
 
@@ -303,16 +280,7 @@ namespace JobMatcher.IdentityCore.Services
                 {
                     foreach (var e in request.Educations)
                     {
-                        _db.Educations.Add(new Education
-                        {
-                            Id = Guid.NewGuid(),
-                            CandidateId = candidate.Id,
-                            Institution = e.Institution,
-                            Degree = e.Degree,
-                            FieldOfStudy = e.FieldOfStudy,
-                            StartDate = DateTime.SpecifyKind(e.StartDate, DateTimeKind.Utc),
-                            EndDate = e.EndDate.HasValue ? DateTime.SpecifyKind(e.EndDate.Value, DateTimeKind.Utc) : (DateTime?)null
-                        });
+                        _db.Educations.Add(CandidateBuilder.CreateEducation(candidate.Id, e.Institution, e.Degree, e.FieldOfStudy, e.StartDate, e.EndDate));
                     }
                 }
 

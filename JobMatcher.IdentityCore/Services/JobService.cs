@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using JobMatcher.IdentityCore.Data;
 using JobMatcher.IdentityCore.DTOs;
 using JobMatcher.IdentityCore.Entities;
+using JobMatcher.IdentityCore.Entities.Builders;
 using JobMatcher.IdentityCore.Interfaces;
 
 namespace JobMatcher.IdentityCore.Services
@@ -26,19 +27,12 @@ namespace JobMatcher.IdentityCore.Services
             if (user == null) return ServiceResult<JobResponse>.Failure("User not found.");
             if (user.CompanyId == null) return ServiceResult<JobResponse>.Failure("User has no company assigned.");
 
-            var job = new Job
-            {
-                Id = Guid.NewGuid(),
-                Title = request.Title,
-                Description = request.Description,
-                Requirements = request.Requirements,
-                Location = request.Location,
-                SalaryRange = request.SalaryRange,
-                EmploymentType = request.EmploymentType,
-                CompanyId = user.CompanyId.Value,
-                CreatedAt = DateTime.UtcNow,
-                Status = JobStatus.Draft
-            };
+            var job = new JobBuilder()
+                .WithContent(request.Title, request.Location, request.EmploymentType)
+                .WithDetails(request.Description, request.Requirements, request.SalaryRange)
+                .ForCompany(user.CompanyId.Value)
+                .AsDraft()
+                .Build();
 
             _db.Jobs.Add(job);
             await _db.SaveChangesAsync();

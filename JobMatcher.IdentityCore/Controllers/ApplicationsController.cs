@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
 using System.IdentityModel.Tokens.Jwt;
 using JobMatcher.IdentityCore.DTOs;
-using JobMatcher.IdentityCore.Services;
+using JobMatcher.IdentityCore.Interfaces;
 
 namespace JobMatcher.IdentityCore.Controllers
 {

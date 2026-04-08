@@ -1,11 +1,7 @@
-using System;
-using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using JobMatcher.IdentityCore.Data;
 using JobMatcher.IdentityCore.Entities;
-using Microsoft.Extensions.Logging;
 using JobMatcher.IdentityCore.Interfaces;
 
 namespace JobMatcher.IdentityCore.Services

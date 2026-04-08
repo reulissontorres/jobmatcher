@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 using JobMatcher.IdentityCore.DTOs;
-using JobMatcher.IdentityCore.Services;
+using JobMatcher.IdentityCore.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace JobMatcher.IdentityCore.Controllers

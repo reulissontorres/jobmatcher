@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using JobMatcher.IdentityCore.DTOs;
-using JobMatcher.IdentityCore.Services;
+using JobMatcher.IdentityCore.Interfaces;
 
 namespace JobMatcher.IdentityCore.Controllers
 {

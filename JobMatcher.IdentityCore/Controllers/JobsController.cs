@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Linq;
 using JobMatcher.IdentityCore.DTOs;
-using JobMatcher.IdentityCore.Services;
+using JobMatcher.IdentityCore.Interfaces;
 
 namespace JobMatcher.IdentityCore.Controllers
 {
