@@ -1,7 +1,7 @@
 using JobMatcher.IdentityCore.Entities;
 using JobMatcher.IdentityCore.DTOs;
 
-namespace JobMatcher.IdentityCore.Services
+namespace JobMatcher.IdentityCore.Interfaces
 {
     public interface IJwtService
     {

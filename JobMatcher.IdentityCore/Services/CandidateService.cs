@@ -1,6 +1,7 @@
 using JobMatcher.IdentityCore.Data;
 using JobMatcher.IdentityCore.DTOs;
 using JobMatcher.IdentityCore.Entities;
+using JobMatcher.IdentityCore.Interfaces;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -205,7 +206,7 @@ namespace JobMatcher.IdentityCore.Services
                 Skills = c.CandidateSkills.OrderByDescending(cs => cs.Level).Select(cs => new CandidateSkillDto { Name = cs.Skill!.Name, Level = cs.Level }).ToList(),
                 WorkExperiences = c.WorkExperiences.OrderByDescending(w => w.StartDate).Select(w => new WorkExperienceDto { CompanyName = w.CompanyName, Role = w.Role, Description = w.Description, StartDate = w.StartDate, EndDate = w.EndDate }).ToList(),
                 Educations = c.Educations.OrderByDescending(e => e.StartDate).Select(e => new EducationDto { Institution = e.Institution, Degree = e.Degree, FieldOfStudy = e.FieldOfStudy, StartDate = e.StartDate, EndDate = e.EndDate }).ToList(),
-                Applications = c.Applications.Select(a => new ApplicationSummaryDto { Id = a.Id, JobId = a.JobId, MatchScore = a.MatchScore, Status = a.Status, AppliedAt = a.AppliedAt }).ToList()
+                Applications = c.Applications.Select(a => new ApplicationSummaryDto { Id = a.Id, JobId = a.JobId, MatchScore = a.MatchScore, Status = a.Status.ToString(), AppliedAt = a.AppliedAt }).ToList()
             }).FirstOrDefaultAsync();
 
             if (candidate == null) return ServiceResult<CandidateDetailsResponse>.Failure("Candidate not found.");

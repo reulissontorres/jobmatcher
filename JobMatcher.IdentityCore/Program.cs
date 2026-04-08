@@ -8,6 +8,7 @@ using JobMatcher.IdentityCore.Data;
 using JobMatcher.IdentityCore.Entities;
 using JobMatcher.IdentityCore.Configurations;
 using JobMatcher.IdentityCore.Services;
+using JobMatcher.IdentityCore.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -71,6 +72,11 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<ICandidateService, CandidateService>();
+// Matching & embedding services
+builder.Services.AddSingleton<IEmbeddingService>(sp => new MockEmbeddingService(128));
+builder.Services.AddScoped<ISimilarityService, SimilarityService>();
+builder.Services.AddScoped<IMatchingService, MatchingService>();
+builder.Services.AddScoped<IApplicationService, ApplicationService>();
 
 // CORS for React dev
 builder.Services.AddCors(options =>

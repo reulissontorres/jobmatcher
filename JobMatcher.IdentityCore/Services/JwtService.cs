@@ -6,6 +6,7 @@ using Microsoft.IdentityModel.Tokens;
 using JobMatcher.IdentityCore.Configurations;
 using JobMatcher.IdentityCore.Entities;
 using JobMatcher.IdentityCore.DTOs;
+using JobMatcher.IdentityCore.Interfaces;
 
 namespace JobMatcher.IdentityCore.Services
 {

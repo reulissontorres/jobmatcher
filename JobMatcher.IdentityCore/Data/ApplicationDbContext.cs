@@ -11,6 +11,7 @@ namespace JobMatcher.IdentityCore.Data
         public DbSet<Company> Companies { get; set; } = null!;
         public DbSet<Job> Jobs { get; set; } = null!;
         public DbSet<Application> Applications { get; set; } = null!;
+        public DbSet<EmbeddingStorage> EmbeddingStorages { get; set; } = null!;
         public DbSet<Candidate> Candidates { get; set; } = null!;
         public DbSet<Skill> Skills { get; set; } = null!;
         public DbSet<CandidateSkill> CandidateSkills { get; set; } = null!;
@@ -52,9 +53,20 @@ namespace JobMatcher.IdentityCore.Data
             {
                 b.HasKey(a => a.Id);
                 b.Property(a => a.MatchScore).HasDefaultValue(0.0);
+                b.Property(a => a.Status).HasConversion<string>().HasDefaultValue(ApplicationStatus.Pending);
                 b.Property(a => a.AppliedAt).HasDefaultValueSql("now()");
                 b.HasOne(a => a.Job).WithMany(j => j.Applications).HasForeignKey(a => a.JobId).OnDelete(DeleteBehavior.Cascade);
                 b.HasOne(a => a.Candidate).WithMany(c => c.Applications).HasForeignKey(a => a.CandidateId).OnDelete(DeleteBehavior.Cascade);
+            });
+
+            builder.Entity<EmbeddingStorage>(b =>
+            {
+                b.HasKey(e => e.Id);
+                b.Property(e => e.EntityType).IsRequired().HasMaxLength(50);
+                b.Property(e => e.EntityId).IsRequired();
+                b.Property(e => e.Vector).IsRequired();
+                b.Property(e => e.CreatedAt).HasDefaultValueSql("now()");
+                b.HasIndex(e => new { e.EntityType, e.EntityId }).IsUnique();
             });
 
             // Candidates

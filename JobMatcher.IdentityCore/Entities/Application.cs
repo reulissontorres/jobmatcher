@@ -1,5 +1,13 @@
 namespace JobMatcher.IdentityCore.Entities
 {
+    public enum ApplicationStatus
+    {
+        Pending = 0,
+        Reviewed = 1,
+        Rejected = 2,
+        Accepted = 3
+    }
+
     public class Application
     {
         public Guid Id { get; set; }
@@ -12,7 +20,7 @@ namespace JobMatcher.IdentityCore.Entities
 
         public double MatchScore { get; set; }
 
-        public string? Status { get; set; }
+        public ApplicationStatus Status { get; set; } = ApplicationStatus.Pending;
 
         public DateTime AppliedAt { get; set; }
     }

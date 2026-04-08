@@ -1,6 +1,7 @@
 using JobMatcher.IdentityCore.Data;
 using JobMatcher.IdentityCore.DTOs;
 using JobMatcher.IdentityCore.Entities;
+using JobMatcher.IdentityCore.Interfaces;
 using Microsoft.AspNetCore.Identity;
 
 namespace JobMatcher.IdentityCore.Services

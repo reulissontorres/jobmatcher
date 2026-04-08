@@ -1,6 +1,7 @@
 using JobMatcher.IdentityCore.DTOs;
+using JobMatcher.IdentityCore.Services;
 
-namespace JobMatcher.IdentityCore.Services
+namespace JobMatcher.IdentityCore.Interfaces
 {
     public interface IAuthService
     {

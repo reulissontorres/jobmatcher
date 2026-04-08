@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using JobMatcher.IdentityCore.Data;
 using JobMatcher.IdentityCore.DTOs;
 using JobMatcher.IdentityCore.Entities;
+using JobMatcher.IdentityCore.Interfaces;
 
 namespace JobMatcher.IdentityCore.Services
 {
@@ -126,7 +127,7 @@ namespace JobMatcher.IdentityCore.Services
                     Id = a.Id,
                     CandidateId = a.CandidateId,
                     MatchScore = a.MatchScore,
-                    Status = a.Status,
+                    Status = a.Status.ToString(),
                     AppliedAt = a.AppliedAt
                 }).ToList()
             };

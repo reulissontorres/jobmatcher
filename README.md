@@ -303,3 +303,55 @@ Notes:
 
 If you'd like, I can export an Insomnia workspace JSON that includes the above requests and environment so you can import it directly. Would you like me to add that export to the repo?
 
+---
+
+## Endpoints (Applications & Matching)
+
+These endpoints provide application management (Candidate ↔ Job) and the semantic matching operations.
+
+- `POST /api/applications/apply` — apply a candidate to a job (body: `ApplyRequest` — `{ "candidateId": "...", "jobId": "..." }`). Requires `Authorization` header.
+
+Example:
+```bash
+curl -X POST http://localhost:5297/api/applications/apply \
+	-H "Content-Type: application/json" \
+	-H "Authorization: Bearer $TOKEN" \
+	-d '{"candidateId":"<candidate-id>","jobId":"<job-id>"}'
+```
+
+- `GET /api/applications/job/{jobId}` — list applications for a job (returns `ApplicationSummaryDto` with `MatchScore`, `Status`, `AppliedAt`).
+- `GET /api/applications/candidate/{candidateId}` — list applications for a candidate.
+
+- `POST /api/matching/job/{jobId}/run` — recompute match scores for all candidates for a job (accepted).
+- `POST /api/matching/candidate/{candidateId}/run` — recompute match scores for all jobs for a candidate (accepted).
+
+## Embeddings & Matching (developer notes)
+
+- Embeddings are produced by a pluggable `IEmbeddingService`. The repository currently includes a deterministic `MockEmbeddingService` that hashes tokens into a fixed-length, L2-normalized vector (useful for local testing).
+- Embeddings are cached in the database in the `EmbeddingStorages` table (JSON string column) to avoid expensive recomputation. The migration `Migrations/20260408010101_AddEmbeddingStorage.cs` creates this table.
+- Similarity is computed via cosine similarity and normalized to a 0–100 `MatchScore` using: `score = clamp(((cosine) + 1)/2 * 100, 0, 100)`.
+- The matching flow (implemented in `MatchingService`) builds textual representations for Candidates and Jobs, obtains embeddings (cached), computes similarity, and creates/updates `Application` rows with `MatchScore`.
+
+Relevant files:
+- [JobMatcher.IdentityCore/Controllers/ApplicationsController.cs](JobMatcher.IdentityCore/Controllers/ApplicationsController.cs)
+- [JobMatcher.IdentityCore/Controllers/MatchingController.cs](JobMatcher.IdentityCore/Controllers/MatchingController.cs)
+- [JobMatcher.IdentityCore/Services/MockEmbeddingService.cs](JobMatcher.IdentityCore/Services/MockEmbeddingService.cs)
+- [JobMatcher.IdentityCore/Services/MatchingService.cs](JobMatcher.IdentityCore/Services/MatchingService.cs)
+- [JobMatcher.IdentityCore/Entities/EmbeddingStorage.cs](JobMatcher.IdentityCore/Entities/EmbeddingStorage.cs)
+
+## Running migrations / notes
+
+- If you added/changed migrations locally, run:
+```bash
+cd JobMatcher.IdentityCore
+dotnet tool install --global dotnet-ef --version 10.0.5 # if not installed
+dotnet ef database update
+```
+- `Program.cs` will attempt to apply compiled migrations at startup; if you prefer automatic apply, just `dotnet run`.
+
+## Next steps (ideas)
+
+- Replace `MockEmbeddingService` with a real provider (OpenAI / Azure / Ollama) by implementing `IEmbeddingService`.
+- Add background workers to run matching periodically or on events (recommended for large datasets).
+- Expose `GET /api/matching/job/{jobId}/top?n=10` to return top-N candidates with match explanations (keyword-overlap).
+
