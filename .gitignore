@@ -1,4 +1,6 @@
-# Build results
+# ==========================================
+# .NET / C# (Backend)
+# ==========================================
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
@@ -13,38 +15,61 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+TestResults/
 
-# Visual Studio cache/options
+# ==========================================
+# React / Next.js (Frontend)
+# ==========================================
+# Dependências
+**/node_modules/
+**/.pnpm-debug.log*
+
+# Build e Saída
+**/dist/
+**/.next/
+**/out/
+**/build/
+
+# Cache de ferramentas de linting e build
+**/.eslintcache
+**/.stylelintcache
+**/.next/cache/
+
+# ==========================================
+# IDEs e Ferramentas
+# ==========================================
 .vs/
-
-# Visual Studio Code
 .vscode/
 *.code-workspace
-
-# Rider
 .idea/
 *.sln.iml
 
-# User-specific files
+# Arquivos de usuário/config local
 *.rsuser
 *.suo
 *.user
 *.userosscache
 *.sln.docstates
 
-# NuGet
+# ==========================================
+# NuGet e Pacotes
+# ==========================================
 *.nupkg
 *.snupkg
 *.nuget.props
 *.nuget.targets
 
-# Local environment variables
+# ==========================================
+# Variáveis de Ambiente (SEGURANÇA!)
+# ==========================================
 .env
 .env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# OS files
+# ==========================================
+# Sistema Operacional
+# ==========================================
 .DS_Store
 Thumbs.db
-
-# Test results
-TestResults/
