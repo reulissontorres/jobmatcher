@@ -1,5 +1,3 @@
-using System;
-
 namespace JobMatcher.IdentityCore.Entities
 {
     public class CandidateSkill

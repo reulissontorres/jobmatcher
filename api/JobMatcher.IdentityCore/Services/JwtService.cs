@@ -18,7 +18,7 @@ namespace JobMatcher.IdentityCore.Services
             _settings = settings.Value;
         }
 
-        public AuthResponse GenerateJwt(ApplicationUser user, IEnumerable<string> roles)
+        public AuthResponse GenerateJwt(AppUser user, IEnumerable<string> roles)
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_settings.Secret ?? string.Empty));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

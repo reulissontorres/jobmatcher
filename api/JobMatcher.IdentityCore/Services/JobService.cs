@@ -11,10 +11,10 @@ namespace JobMatcher.IdentityCore.Services
     public class JobService : IJobService
     {
         private readonly ApplicationDbContext _db;
-        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly UserManager<AppUser> _userManager;
         private readonly ILogger<JobService> _logger;
 
-        public JobService(ApplicationDbContext db, UserManager<ApplicationUser> userManager, ILogger<JobService> logger)
+        public JobService(ApplicationDbContext db, UserManager<AppUser> userManager, ILogger<JobService> logger)
         {
             _db = db;
             _userManager = userManager;

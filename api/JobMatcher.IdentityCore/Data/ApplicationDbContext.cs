@@ -4,7 +4,7 @@ using JobMatcher.IdentityCore.Entities;
 
 namespace JobMatcher.IdentityCore.Data
 {
-    public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
+    public class ApplicationDbContext : IdentityDbContext<AppUser>
     {
         public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options) { }
 
@@ -29,7 +29,7 @@ namespace JobMatcher.IdentityCore.Data
                 b.Property(c => c.CreatedAt).HasDefaultValueSql("now()");
             });
 
-            builder.Entity<ApplicationUser>(b =>
+            builder.Entity<AppUser>(b =>
             {
                 b.Property(u => u.FullName).HasMaxLength(256);
                 b.HasOne<Company>().WithMany().HasForeignKey(u => u.CompanyId).OnDelete(DeleteBehavior.SetNull);

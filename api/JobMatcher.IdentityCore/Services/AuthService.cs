@@ -8,14 +8,14 @@ namespace JobMatcher.IdentityCore.Services
 {
     public class AuthService : IAuthService
     {
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly UserManager<AppUser> _userManager;
+        private readonly SignInManager<AppUser> _signInManager;
         private readonly ApplicationDbContext _dbContext;
         private readonly IJwtService _jwtService;
 
         public AuthService(
-            UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager,
+            UserManager<AppUser> userManager,
+            SignInManager<AppUser> signInManager,
             ApplicationDbContext dbContext,
             IJwtService jwtService)
         {
@@ -39,7 +39,7 @@ namespace JobMatcher.IdentityCore.Services
                 await _dbContext.SaveChangesAsync();
             }
 
-            var user = new ApplicationUser
+            var user = new AppUser
             {
                 UserName = model.Email,
                 Email = model.Email,

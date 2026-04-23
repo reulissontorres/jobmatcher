@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace JobMatcher.IdentityCore.Entities
 {
     public class Skill

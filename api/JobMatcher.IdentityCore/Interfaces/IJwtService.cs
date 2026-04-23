@@ -5,6 +5,6 @@ namespace JobMatcher.IdentityCore.Interfaces
 {
     public interface IJwtService
     {
-        AuthResponse GenerateJwt(ApplicationUser user, IEnumerable<string> roles);
+        AuthResponse GenerateJwt(AppUser user, IEnumerable<string> roles);
     }
 }
