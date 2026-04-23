@@ -72,7 +72,7 @@ export default function RegisterPage() {
         formData.email,
         formData.password
       )
-      router.push('/dashboard')
+      router.push('/login')
     } catch (error) {
       setSubmitError(error.message)
     } finally {
