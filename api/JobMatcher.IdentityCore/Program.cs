@@ -8,6 +8,7 @@ using JobMatcher.IdentityCore.Data;
 using JobMatcher.IdentityCore.Entities;
 using JobMatcher.IdentityCore.Configurations;
 using JobMatcher.IdentityCore.Services;
+using JobMatcher.IdentityCore.Services.Providers;
 using JobMatcher.IdentityCore.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -73,7 +74,26 @@ builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IJobService, JobService>();
 builder.Services.AddScoped<ICandidateService, CandidateService>();
 // Matching & embedding services
-builder.Services.AddSingleton<IEmbeddingService>(sp => new MockEmbeddingService(128));
+// Bind OpenAI settings (from User Secrets or appsettings)
+builder.Services.Configure<OpenAiSettings>(builder.Configuration.GetSection("OpenAi"));
+
+if (builder.Environment.IsDevelopment())
+{
+    // In Development keep the fast mock
+    builder.Services.AddSingleton<IEmbeddingService>(sp => new MockEmbeddingService(128));
+}
+else
+{
+    // In non-development environments use the OpenAI adapter via typed HttpClient
+    builder.Services.AddHttpClient<IEmbeddingService, OpenAiEmbeddingAdapter>((sp, client) =>
+    {
+        var opts = sp.GetRequiredService<Microsoft.Extensions.Options.IOptions<OpenAiSettings>>().Value;
+        client.BaseAddress = new Uri("https://api.openai.com/");
+        client.DefaultRequestHeaders.Authorization =
+            new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", opts.ApiKey);
+    });
+}
+
 builder.Services.AddScoped<ISimilarityService, SimilarityService>();
 builder.Services.AddScoped<IMatchingService, MatchingService>();
 builder.Services.AddScoped<IApplicationService, ApplicationService>();

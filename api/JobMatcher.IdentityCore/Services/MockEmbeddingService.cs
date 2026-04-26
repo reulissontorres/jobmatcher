@@ -1,9 +1,6 @@
-using System;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using JobMatcher.IdentityCore.Interfaces;
 
 namespace JobMatcher.IdentityCore.Services
