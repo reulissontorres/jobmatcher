@@ -1,10 +1,9 @@
 using JobMatcher.IdentityCore.Entities;
 using JobMatcher.IdentityCore.DTOs;
 
-namespace JobMatcher.IdentityCore.Interfaces
+namespace JobMatcher.IdentityCore.Interfaces;
+
+public interface IJwtService
 {
-    public interface IJwtService
-    {
-        AuthResponse GenerateJwt(AppUser user, IEnumerable<string> roles);
-    }
+    AuthResponse GenerateJwt(AppUser user, IEnumerable<string> roles);
 }

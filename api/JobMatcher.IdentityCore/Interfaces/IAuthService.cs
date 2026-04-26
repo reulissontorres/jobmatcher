@@ -1,11 +1,10 @@
 using JobMatcher.IdentityCore.DTOs;
 using JobMatcher.IdentityCore.Services;
 
-namespace JobMatcher.IdentityCore.Interfaces
+namespace JobMatcher.IdentityCore.Interfaces;
+
+public interface IAuthService
 {
-    public interface IAuthService
-    {
-        Task<ServiceResult<AuthResponse>> RegisterAsync(RegisterRequest model);
-        Task<ServiceResult<AuthResponse>> LoginAsync(LoginRequest model);
-    }
+    Task<ServiceResult<AuthResponse>> RegisterAsync(RegisterRequest model);
+    Task<ServiceResult<AuthResponse>> LoginAsync(LoginRequest model);
 }

@@ -1,10 +1,9 @@
-namespace JobMatcher.IdentityCore.Configurations
+namespace JobMatcher.IdentityCore.Configurations;
+
+public class JwtSettings
 {
-    public class JwtSettings
-    {
-        public string? Secret { get; set; }
-        public string? Issuer { get; set; }
-        public string? Audience { get; set; }
-        public int ExpirationMinutes { get; set; } = 60;
-    }
+    public string? Secret { get; set; }
+    public string? Issuer { get; set; }
+    public string? Audience { get; set; }
+    public int ExpirationMinutes { get; set; } = 60;
 }

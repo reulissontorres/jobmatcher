@@ -3,91 +3,90 @@ using JobMatcher.IdentityCore.Data;
 using JobMatcher.IdentityCore.DTOs;
 using JobMatcher.IdentityCore.Interfaces;
 
-namespace JobMatcher.IdentityCore.Services
+namespace JobMatcher.IdentityCore.Services;
+
+public class ApplicationService : IApplicationService
 {
-    public class ApplicationService : IApplicationService
+    private readonly ApplicationDbContext _db;
+    private readonly IMatchingService _matchingService;
+
+    public ApplicationService(ApplicationDbContext db, IMatchingService matchingService)
     {
-        private readonly ApplicationDbContext _db;
-        private readonly IMatchingService _matchingService;
+        _db = db;
+        _matchingService = matchingService;
+    }
 
-        public ApplicationService(ApplicationDbContext db, IMatchingService matchingService)
+    public async Task<ServiceResult<ApplicationSummaryDto>> ApplyCandidateToJobAsync(Guid candidateId, Guid jobId)
+    {
+        var candidate = await _db.Candidates.FindAsync(candidateId);
+        if (candidate == null) return ServiceResult<ApplicationSummaryDto>.Failure("Candidate not found.");
+
+        var job = await _db.Jobs.FindAsync(jobId);
+        if (job == null) return ServiceResult<ApplicationSummaryDto>.Failure("Job not found.");
+
+        var existing = await _db.Applications.FirstOrDefaultAsync(a => a.CandidateId == candidateId && a.JobId == jobId);
+        if (existing != null) return ServiceResult<ApplicationSummaryDto>.Failure("Candidate already applied to this job.");
+
+        var app = new Entities.Builders.ApplicationBuilder()
+        .ForCandidate(candidateId)
+        .ForJob(jobId)
+        .WithInitialStatus()
+        .WithMatchScore(0.0)
+        .Build();
+
+        _db.Applications.Add(app);
+        await _db.SaveChangesAsync();
+
+        // compute match synchronously for now and persist score
+        var score = await _matchingService.MatchCandidateToJobAsync(candidateId, jobId);
+        app.MatchScore = score;
+        await _db.SaveChangesAsync();
+
+        var dto = new ApplicationSummaryDto
         {
-            _db = db;
-            _matchingService = matchingService;
-        }
+            Id = app.Id,
+            JobId = app.JobId,
+            MatchScore = score,
+            Status = app.Status.ToString(),
+            AppliedAt = app.AppliedAt
+        };
 
-        public async Task<ServiceResult<ApplicationSummaryDto>> ApplyCandidateToJobAsync(Guid candidateId, Guid jobId)
-        {
-            var candidate = await _db.Candidates.FindAsync(candidateId);
-            if (candidate == null) return ServiceResult<ApplicationSummaryDto>.Failure("Candidate not found.");
+        return ServiceResult<ApplicationSummaryDto>.Success(dto);
+    }
 
-            var job = await _db.Jobs.FindAsync(jobId);
-            if (job == null) return ServiceResult<ApplicationSummaryDto>.Failure("Job not found.");
-
-            var existing = await _db.Applications.FirstOrDefaultAsync(a => a.CandidateId == candidateId && a.JobId == jobId);
-            if (existing != null) return ServiceResult<ApplicationSummaryDto>.Failure("Candidate already applied to this job.");
-
-            var app = new Entities.Builders.ApplicationBuilder()
-            .ForCandidate(candidateId)
-            .ForJob(jobId)
-            .WithInitialStatus()
-            .WithMatchScore(0.0)
-            .Build();
-
-            _db.Applications.Add(app);
-            await _db.SaveChangesAsync();
-
-            // compute match synchronously for now and persist score
-            var score = await _matchingService.MatchCandidateToJobAsync(candidateId, jobId);
-            app.MatchScore = score;
-            await _db.SaveChangesAsync();
-
-            var dto = new ApplicationSummaryDto
+    public async Task<ServiceResult<List<ApplicationSummaryDto>>> GetApplicationsByJobAsync(Guid jobId)
+    {
+        var list = await _db.Applications
+            .Where(a => a.JobId == jobId)
+            .AsNoTracking()
+            .Select(a => new ApplicationSummaryDto
             {
-                Id = app.Id,
-                JobId = app.JobId,
-                MatchScore = score,
-                Status = app.Status.ToString(),
-                AppliedAt = app.AppliedAt
-            };
+                Id = a.Id,
+                JobId = a.JobId,
+                MatchScore = a.MatchScore,
+                Status = a.Status.ToString(),
+                AppliedAt = a.AppliedAt
+            })
+            .ToListAsync();
 
-            return ServiceResult<ApplicationSummaryDto>.Success(dto);
-        }
+        return ServiceResult<List<ApplicationSummaryDto>>.Success(list);
+    }
 
-        public async Task<ServiceResult<List<ApplicationSummaryDto>>> GetApplicationsByJobAsync(Guid jobId)
-        {
-            var list = await _db.Applications
-                .Where(a => a.JobId == jobId)
-                .AsNoTracking()
-                .Select(a => new ApplicationSummaryDto
-                {
-                    Id = a.Id,
-                    JobId = a.JobId,
-                    MatchScore = a.MatchScore,
-                    Status = a.Status.ToString(),
-                    AppliedAt = a.AppliedAt
-                })
-                .ToListAsync();
+    public async Task<ServiceResult<List<ApplicationSummaryDto>>> GetApplicationsByCandidateAsync(Guid candidateId)
+    {
+        var list = await _db.Applications
+            .Where(a => a.CandidateId == candidateId)
+            .AsNoTracking()
+            .Select(a => new ApplicationSummaryDto
+            {
+                Id = a.Id,
+                JobId = a.JobId,
+                MatchScore = a.MatchScore,
+                Status = a.Status.ToString(),
+                AppliedAt = a.AppliedAt
+            })
+            .ToListAsync();
 
-            return ServiceResult<List<ApplicationSummaryDto>>.Success(list);
-        }
-
-        public async Task<ServiceResult<List<ApplicationSummaryDto>>> GetApplicationsByCandidateAsync(Guid candidateId)
-        {
-            var list = await _db.Applications
-                .Where(a => a.CandidateId == candidateId)
-                .AsNoTracking()
-                .Select(a => new ApplicationSummaryDto
-                {
-                    Id = a.Id,
-                    JobId = a.JobId,
-                    MatchScore = a.MatchScore,
-                    Status = a.Status.ToString(),
-                    AppliedAt = a.AppliedAt
-                })
-                .ToListAsync();
-
-            return ServiceResult<List<ApplicationSummaryDto>>.Success(list);
-        }
+        return ServiceResult<List<ApplicationSummaryDto>>.Success(list);
     }
 }

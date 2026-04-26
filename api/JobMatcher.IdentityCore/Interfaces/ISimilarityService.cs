@@ -1,8 +1,7 @@
 
-namespace JobMatcher.IdentityCore.Interfaces
+namespace JobMatcher.IdentityCore.Interfaces;
+
+public interface ISimilarityService
 {
-    public interface ISimilarityService
-    {
-        double CosineSimilarity(float[] a, float[] b);
-    }
+    double CosineSimilarity(float[] a, float[] b);
 }

@@ -1,19 +1,18 @@
 using System;
 
-namespace JobMatcher.IdentityCore.Entities
+namespace JobMatcher.IdentityCore.Entities;
+
+public class EmbeddingStorage
 {
-    public class EmbeddingStorage
-    {
-        public Guid Id { get; set; }
+    public Guid Id { get; set; }
 
-        // "Job" or "Candidate"
-        public string EntityType { get; set; } = default!;
+    // "Job" or "Candidate"
+    public string EntityType { get; set; } = default!;
 
-        public Guid EntityId { get; set; }
+    public Guid EntityId { get; set; }
 
-        // Stored as JSON string (array of floats)
-        public string Vector { get; set; } = default!;
+    // Stored as JSON string (array of floats)
+    public string Vector { get; set; } = default!;
 
-        public DateTime CreatedAt { get; set; }
-    }
+    public DateTime CreatedAt { get; set; }
 }

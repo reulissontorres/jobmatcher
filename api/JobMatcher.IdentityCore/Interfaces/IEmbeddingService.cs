@@ -1,7 +1,6 @@
-namespace JobMatcher.IdentityCore.Interfaces
+namespace JobMatcher.IdentityCore.Interfaces;
+
+public interface IEmbeddingService
 {
-    public interface IEmbeddingService
-    {
-        Task<float[]> GenerateEmbeddingAsync(string text);
-    }
+    Task<float[]> GenerateEmbeddingAsync(string text);
 }

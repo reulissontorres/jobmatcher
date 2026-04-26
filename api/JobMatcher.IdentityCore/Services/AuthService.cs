@@ -4,74 +4,73 @@ using JobMatcher.IdentityCore.Entities;
 using JobMatcher.IdentityCore.Interfaces;
 using Microsoft.AspNetCore.Identity;
 
-namespace JobMatcher.IdentityCore.Services
+namespace JobMatcher.IdentityCore.Services;
+
+public class AuthService : IAuthService
 {
-    public class AuthService : IAuthService
+    private readonly UserManager<AppUser> _userManager;
+    private readonly SignInManager<AppUser> _signInManager;
+    private readonly ApplicationDbContext _dbContext;
+    private readonly IJwtService _jwtService;
+
+    public AuthService(
+        UserManager<AppUser> userManager,
+        SignInManager<AppUser> signInManager,
+        ApplicationDbContext dbContext,
+        IJwtService jwtService)
     {
-        private readonly UserManager<AppUser> _userManager;
-        private readonly SignInManager<AppUser> _signInManager;
-        private readonly ApplicationDbContext _dbContext;
-        private readonly IJwtService _jwtService;
+        _userManager = userManager;
+        _signInManager = signInManager;
+        _dbContext = dbContext;
+        _jwtService = jwtService;
+    }
 
-        public AuthService(
-            UserManager<AppUser> userManager,
-            SignInManager<AppUser> signInManager,
-            ApplicationDbContext dbContext,
-            IJwtService jwtService)
+    public async Task<ServiceResult<AuthResponse>> RegisterAsync(RegisterRequest model)
+    {
+        var existing = await _userManager.FindByEmailAsync(model.Email);
+        if (existing != null)
+            return ServiceResult<AuthResponse>.Failure("Email already in use.");
+
+        Company? company = null;
+        if (!string.IsNullOrWhiteSpace(model.CompanyName))
         {
-            _userManager = userManager;
-            _signInManager = signInManager;
-            _dbContext = dbContext;
-            _jwtService = jwtService;
+            company = new Company { Id = Guid.NewGuid(), Name = model.CompanyName, CreatedAt = DateTime.UtcNow };
+            _dbContext.Companies.Add(company);
+            await _dbContext.SaveChangesAsync();
         }
 
-        public async Task<ServiceResult<AuthResponse>> RegisterAsync(RegisterRequest model)
+        var user = new AppUser
         {
-            var existing = await _userManager.FindByEmailAsync(model.Email);
-            if (existing != null)
-                return ServiceResult<AuthResponse>.Failure("Email already in use.");
+            UserName = model.Email,
+            Email = model.Email,
+            FullName = model.FullName,
+            CompanyId = company?.Id
+        };
 
-            Company? company = null;
-            if (!string.IsNullOrWhiteSpace(model.CompanyName))
-            {
-                company = new Company { Id = Guid.NewGuid(), Name = model.CompanyName, CreatedAt = DateTime.UtcNow };
-                _dbContext.Companies.Add(company);
-                await _dbContext.SaveChangesAsync();
-            }
-
-            var user = new AppUser
-            {
-                UserName = model.Email,
-                Email = model.Email,
-                FullName = model.FullName,
-                CompanyId = company?.Id
-            };
-
-            var result = await _userManager.CreateAsync(user, model.Password);
-            if (!result.Succeeded)
-            {
-                var errors = result.Errors.Select(e => e.Description).ToArray();
-                return ServiceResult<AuthResponse>.Failure(errors);
-            }
-
-            var roles = await _userManager.GetRolesAsync(user);
-            var auth = _jwtService.GenerateJwt(user, roles);
-            return ServiceResult<AuthResponse>.Success(auth);
+        var result = await _userManager.CreateAsync(user, model.Password);
+        if (!result.Succeeded)
+        {
+            var errors = result.Errors.Select(e => e.Description).ToArray();
+            return ServiceResult<AuthResponse>.Failure(errors);
         }
 
-        public async Task<ServiceResult<AuthResponse>> LoginAsync(LoginRequest model)
-        {
-            var user = await _userManager.FindByEmailAsync(model.Email);
-            if (user == null)
-                return ServiceResult<AuthResponse>.Failure("Invalid credentials.");
+        var roles = await _userManager.GetRolesAsync(user);
+        var auth = _jwtService.GenerateJwt(user, roles);
+        return ServiceResult<AuthResponse>.Success(auth);
+    }
 
-            var valid = await _userManager.CheckPasswordAsync(user, model.Password);
-            if (!valid)
-                return ServiceResult<AuthResponse>.Failure("Invalid credentials.");
+    public async Task<ServiceResult<AuthResponse>> LoginAsync(LoginRequest model)
+    {
+        var user = await _userManager.FindByEmailAsync(model.Email);
+        if (user == null)
+            return ServiceResult<AuthResponse>.Failure("Invalid credentials.");
 
-            var roles = await _userManager.GetRolesAsync(user);
-            var auth = _jwtService.GenerateJwt(user, roles);
-            return ServiceResult<AuthResponse>.Success(auth);
-        }
+        var valid = await _userManager.CheckPasswordAsync(user, model.Password);
+        if (!valid)
+            return ServiceResult<AuthResponse>.Failure("Invalid credentials.");
+
+        var roles = await _userManager.GetRolesAsync(user);
+        var auth = _jwtService.GenerateJwt(user, roles);
+        return ServiceResult<AuthResponse>.Success(auth);
     }
 }
